@@ -1,11 +1,13 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common'
+import { Controller, Get, NotFoundException, Param, UseGuards } from '@nestjs/common'
 import { UserService } from './user.service'
 import { User } from '@prisma/client'
+import { AccessTokenGuard } from '../auth/strategies/access-token.guard'
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(AccessTokenGuard)
   @Get(':id')
   async getOne(@Param('id') id: string): Promise<User> {
     const user = await this.userService.getUser({ id: Number(id) })
@@ -15,6 +17,7 @@ export class UserController {
     return user
   }
 
+  @UseGuards(AccessTokenGuard)
   @Get()
   get(): Promise<User[]> {
     return this.userService.getUsers({})
