@@ -1,9 +1,9 @@
 import { Controller, Get, Request, UseGuards } from '@nestjs/common'
-import { JwtAuthGuard } from '../auth/strategies/jwt.guard'
+import { AccessTokenGuard } from '../auth/strategies/access-token.guard'
 
 @Controller('profile')
 export class ProfileController {
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AccessTokenGuard)
   @Get()
   getProfile(@Request() req: any) {
     return req.user
