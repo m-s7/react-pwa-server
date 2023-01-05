@@ -4,17 +4,15 @@ declare global {
   namespace Express {
     interface User {
       sub: number
-      username: string
+      email: string
       createdAt: Date
       updatedAt: Date
       iat: number
       exp: number
     }
 
-    interface Request<B = unknown, U = Express.User> {
-      body: B
-      user: U
-      header: (string) => string
+    export interface Request {
+      user: User
     }
   }
 }
