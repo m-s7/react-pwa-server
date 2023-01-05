@@ -11,8 +11,8 @@ declare global {
       exp: number
     }
 
-    export interface Request {
-      user: User
-    }
+    // export interface Request {
+    //   user: User
+    // }
   }
 }

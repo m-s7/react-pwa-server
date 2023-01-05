@@ -76,12 +76,18 @@ export class AuthService {
     })
   }
 
-  async refreshTokens(id: number, refreshToken: string): Promise<JwtResponse> {
+  async validateRefreshToken(id: number, refreshToken: string): Promise<boolean> {
+    const user = await this.usersService.getUser({ id: id })
+    if (!user || !user.refresh_token || !refreshToken) throw new UnauthorizedException()
+
+    const refreshTokenValid = await argon2.verify(user.refresh_token, refreshToken)
+
+    return refreshTokenValid
+  }
+
+  async refreshTokens(id: number): Promise<JwtResponse> {
     const user = await this.usersService.getUser({ id: id })
     if (!user || !user.refresh_token) throw new UnauthorizedException()
-
-    const refreshTokenMatches = await argon2.verify(user.refresh_token, refreshToken)
-    if (!refreshTokenMatches) throw new UnauthorizedException()
 
     const tokens = await this.getTokens({ ...user })
     await this.updateRefreshToken(user.id, tokens.refresh_token)

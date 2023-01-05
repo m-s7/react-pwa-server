@@ -2,9 +2,16 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import * as cookieParser from 'cookie-parser'
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface'
+
+const corsOptions: CorsOptions = {
+  origin: 'http://localhost:8902',
+  optionsSuccessStatus: 200,
+  credentials: true,
+}
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { cors: true })
+  const app = await NestFactory.create(AppModule, { cors: corsOptions })
 
   app.use(cookieParser())
   app.setGlobalPrefix('api')
