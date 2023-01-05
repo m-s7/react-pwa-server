@@ -1,19 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Request,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common'
-import { AuthToken } from './types/auth-token'
+import { Controller, Get, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common'
 import { LocalAuthGuard } from './strategies/local.guard'
 import { AuthService } from './auth.service'
-import { Request as ExpressRequest } from 'express'
 import { User } from '@prisma/client'
 import { RefreshTokenGuard } from './strategies/refresh-token.guard'
-
-type AuthRequest = ExpressRequest & { user: Omit<User, 'password'> }
+import { JwtResponse } from './types/jwt'
+import { RequestBody } from '../../types/request'
 
 @Controller('auth')
 export class AuthController {
@@ -21,19 +12,18 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req: AuthRequest): Promise<AuthToken> {
+  async login(@Req() req: RequestBody<any, Omit<User, 'password'>>): Promise<JwtResponse> {
     return this.authService.login(req.user)
   }
 
   @UseGuards(RefreshTokenGuard)
   @Get('refresh')
-  refreshTokens(@Request() req: ExpressRequest) {
-    const user = req.user as any
+  refreshTokens(@Req() req: Express.Request): Promise<JwtResponse> {
+    const user = req.user
+    if (!user) throw new UnauthorizedException()
+
     const id = user.sub
-    const refreshToken = req
-      .header('authorization')
-      ?.replace('Bearer ', '')
-      .trim()
+    const refreshToken = req.header('authorization')?.replace('Bearer ', '').trim()
 
     if (!refreshToken) throw new UnauthorizedException()
 

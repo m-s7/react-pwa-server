@@ -1,21 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { UserService } from '../user/user.service'
-import { AuthenticatedUser } from './types/authenticated-user'
 import { JwtService } from '@nestjs/jwt'
 import { jwtConstants } from './constants'
 import * as argon2 from 'argon2'
+import { User } from '@prisma/client'
+import { JwtResponse } from './types/jwt'
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UserService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private usersService: UserService, private jwtService: JwtService) {}
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<AuthenticatedUser | null> {
+  async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
     const user = await this.usersService.getUser({ email: email })
 
     if (user && user.password === password) {
@@ -27,10 +22,12 @@ export class AuthService {
     return null
   }
 
-  async login(user: AuthenticatedUser): Promise<any> {
+  async login(user: Omit<User, 'password'>): Promise<JwtResponse> {
+    const { id } = user
+
     const payload = {
+      sub: id,
       username: user.email,
-      sub: user.id,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
     }
@@ -46,7 +43,7 @@ export class AuthService {
       }),
     ])
 
-    await this.updateRefreshToken(user.id, refreshToken)
+    await this.updateRefreshToken(id, refreshToken)
 
     return {
       access_token: accessToken,
@@ -54,7 +51,7 @@ export class AuthService {
     }
   }
 
-  async updateRefreshToken(id: number, refreshToken: string) {
+  async updateRefreshToken(id: number, refreshToken: string): Promise<void> {
     const hashedRefreshToken = await this.hashData(refreshToken)
     await this.usersService.updateUser({
       where: {
@@ -66,14 +63,11 @@ export class AuthService {
     })
   }
 
-  async refreshTokens(id: number, refreshToken: string) {
+  async refreshTokens(id: number, refreshToken: string): Promise<JwtResponse> {
     const user = await this.usersService.getUser({ id: id })
     if (!user || !user.refresh_token) throw new UnauthorizedException()
 
-    const refreshTokenMatches = await argon2.verify(
-      user.refresh_token,
-      refreshToken,
-    )
+    const refreshTokenMatches = await argon2.verify(user.refresh_token, refreshToken)
     if (!refreshTokenMatches) throw new UnauthorizedException()
 
     const tokens = await this.login(user)
@@ -82,7 +76,7 @@ export class AuthService {
     return tokens
   }
 
-  hashData(data: string) {
+  hashData(data: string): Promise<string> {
     return argon2.hash(data)
   }
 }

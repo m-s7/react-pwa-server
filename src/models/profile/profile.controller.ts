@@ -1,11 +1,12 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common'
+import { Controller, Get, Req, UseGuards } from '@nestjs/common'
 import { AccessTokenGuard } from '../auth/strategies/access-token.guard'
+import { RequestBody } from '../../types/request'
 
 @Controller('profile')
 export class ProfileController {
   @UseGuards(AccessTokenGuard)
   @Get()
-  getProfile(@Request() req: any) {
+  getProfile(@Req() req: RequestBody<Record<string, any>>): Express.User | undefined {
     return req.user
   }
 }
