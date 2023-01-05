@@ -4,7 +4,6 @@ import { AuthService } from './auth.service'
 import { User } from '@prisma/client'
 import { RefreshTokenGuard } from './strategies/refresh-token.guard'
 import { JwtResponse } from './types/jwt'
-import { RequestBody } from '../../types/request'
 
 @Controller('auth')
 export class AuthController {
@@ -12,7 +11,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: RequestBody<any, Omit<User, 'password'>>): Promise<JwtResponse> {
+  async login(@Req() req: Express.Request<unknown, Omit<User, 'password'>>): Promise<JwtResponse> {
     return this.authService.login(req.user)
   }
 

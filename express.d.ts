@@ -2,7 +2,7 @@ export {}
 
 declare global {
   namespace Express {
-    export interface User {
+    interface User {
       sub: number
       username: string
       createdAt: Date
@@ -11,8 +11,8 @@ declare global {
       exp: number
     }
 
-    export interface Request<U = Express.User> {
-      body: unknown
+    interface Request<B = unknown, U = Express.User> {
+      body: B
       user: U
       header: (string) => string
     }
